@@ -6,6 +6,11 @@ type Schematic struct {
 	CreatedAt     string
 	Versions      map[string]Version
 	Data          string // Master data
+
+	Archived   bool
+	ArchivedAt string
+
+	Description string
 }
 
 type Version struct {

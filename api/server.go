@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+
+	"os"
 )
 
 var (
@@ -34,7 +36,7 @@ func Init() {
 		cursor.All(context.Background(), &schematics)
 
 		for i := range schematics {
-			schematics[i].Versions = nil
+			schematics[i].Versions = map[string]types.Version{}
 		}
 		c.JSON(http.StatusOK, schematics)
 	})
@@ -76,7 +78,6 @@ func Init() {
 	Router.GET("/schematics/:schematic_id", func(c *gin.Context) {
 		var schematic types.Schematic
 		global.Mongo.Collection("schematics").FindOne(context.TODO(), map[string]string{"id": c.Param("schematic_id")}).Decode(&schematic)
-		schematic.Versions = nil
 		if schematic.ID != "" {
 			c.JSON(http.StatusOK, schematic)
 		} else {
@@ -87,12 +88,31 @@ func Init() {
 	Router.DELETE("/schematics/:schematic_id", func(c *gin.Context) {
 		var schematic types.Schematic
 		global.Mongo.Collection("schematics").FindOne(context.TODO(), map[string]string{"id": c.Param("schematic_id")}).Decode(&schematic)
-		if schematic.ID != "" {
-			global.Mongo.Collection("schematics").DeleteOne(context.TODO(), map[string]string{"id": c.Param("schematic_id")})
-			c.JSON(http.StatusOK, map[string]string{"message": "Schematic deleted"})
-		} else {
+		if schematic.ID == "" {
 			c.JSON(http.StatusNotFound, map[string]string{"error": "Not found"})
+			return
 		}
+
+		if schematic.Archived {
+			// actually delete the schematic
+			if c.Query("permanentally-delete") != "true" {
+				c.JSON(http.StatusForbidden, map[string]string{"error": "Schematic is archived. To delete it permanently, add the query parameter 'permanentally-delete=true'"})
+				return
+			}
+			global.Mongo.Collection("schematics").DeleteOne(context.TODO(), map[string]string{"id": c.Param("schematic_id")})
+			c.JSON(http.StatusOK, map[string]string{"message": "Schematic PERMANENTLY deleted"})
+			return
+		}
+
+		schematic.Archived = true
+		schematic.ArchivedAt = time.Now().Format(time.RFC3339)
+		schematic.ID = "archive:" + schematic.ID
+		global.Mongo.Collection("schematics").ReplaceOne(context.TODO(), map[string]string{"id": c.Param("schematic_id")}, schematic)
+
+		c.JSON(http.StatusOK, map[string]interface{}{
+			"archived": true,
+			"object":   schematic,
+		})
 	})
 
 	Router.PUT("/schematics/:schematic_id", func(c *gin.Context) {
@@ -165,6 +185,6 @@ func Init() {
 
 	// You cannot delete a version.
 
-	Router.Run(":8080")
-	log.Println("API server running in port 8080")
+	Router.Run(":" + os.Getenv("PORT"))
+	log.Println("API server running in port " + os.Getenv("PORT"))
 }
