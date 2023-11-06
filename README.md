@@ -1,8 +1,8 @@
 # schemastash-server
 A simple schematic version control system. Written in Go.
 
-## Credits
+### Credits
 Coded by PernyDev
 
-## Building
+### Building
 TBD
