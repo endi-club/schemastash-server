@@ -33,24 +33,23 @@ jobs:
           git commit -m "Build binaries"
           git push
     
-    build-windows:
-      runs-on: windows-latest
-      steps:
-        - uses: actions/checkout@v3
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
 
-        - name: Set up Go
-          uses: actions/setup-go@v4
-          with:
-            go-version: "1.20"
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
 
-        - name: Build Windows X86_64
-          run: go build -o ./dist/server-windows-amd64.exe
+      - name: Build Windows X86_64
+        run: go build -o ./dist/server-windows-amd64.exe
 
-        - name: Commit and push if changed
-          run: |
-            git config --global user.name "Bob the Builder"
-            git config --global user.email "pernydev@gmail.com"
-            git add .
-            git commit -m "Build binaries"
-            git push
-            
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name "Bob the Builder"
+          git config --global user.email "pernydev@gmail.com"
+          git add .
+          git commit -m "Build binaries"
+          git push
