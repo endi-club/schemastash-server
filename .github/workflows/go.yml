@@ -19,9 +19,6 @@ jobs:
       - name: Build Linux X86_64
         run: go build -o ./dist/server-linux-amd64
 
-      - name: Build Windows X86_64
-        run: GOOS=windows GOARCH=amd64 go build -o ./dist/server-windows-amd64.exe
-
       - name: Commit and push if changed
         run: |
           git config --global user.name "Bob the Builder"
